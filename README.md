@@ -2,6 +2,8 @@
 
 Aplicación con API en Laravel 9 y frontend en Vue 3 para registrar recetas médicas.
 
+Incluye panel administrativo responsive, autenticación con Sanctum, resumen de actividad, CRUD de establecimientos, médicos, pacientes y medicamentos, además de creación, edición, filtros y eliminación de recetas.
+
 ## Ejecutar con Docker (recomendado)
 
 Docker permite ejecutar este proyecto con PHP 8.2 y MySQL 8.4 sin modificar ni desinstalar el PHP 5.6 que utiliza SIS.

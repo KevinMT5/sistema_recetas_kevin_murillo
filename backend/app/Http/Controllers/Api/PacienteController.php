@@ -17,5 +17,39 @@ class PacienteController extends Controller
         return response()->json($pacientes);
     }
 
-    // Los otros métodos puedes dejarlos vacíos por ahora
+    public function store(Request $request)
+    {
+        return response()->json(Paciente::create($this->validateData($request)), 201);
+    }
+
+    public function show(Paciente $paciente)
+    {
+        return response()->json($paciente);
+    }
+
+    public function update(Request $request, Paciente $paciente)
+    {
+        $paciente->update($this->validateData($request));
+        return response()->json($paciente->fresh());
+    }
+
+    public function destroy(Paciente $paciente)
+    {
+        if ($paciente->recetas()->exists()) {
+            return response()->json(['message' => 'No se puede eliminar un paciente que tiene recetas.'], 409);
+        }
+
+        $paciente->delete();
+        return response()->json(['message' => 'Paciente eliminado.']);
+    }
+
+    private function validateData(Request $request)
+    {
+        return $request->validate([
+            'nombre' => ['required', 'string', 'max:255'],
+            'fecha_nacimiento' => ['nullable', 'date', 'before_or_equal:today'],
+            'telefono' => ['nullable', 'string', 'max:25'],
+            'direccion' => ['nullable', 'string', 'max:255'],
+        ]);
+    }
 }

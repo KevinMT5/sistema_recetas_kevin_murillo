@@ -1,7 +1,7 @@
 <template>
   <div id="app">
-    <LoginForm v-if="!token" />
-    <DashboardPanel v-else />
+    <LoginForm v-if="!token" @authenticated="onAuthenticated" />
+    <DashboardPanel v-else :usuario="usuario" @logout="onLogout" />
   </div>
 </template>
 
@@ -12,8 +12,21 @@ import DashboardPanel from './components/DashboardPanel.vue';
 export default {
   name: 'App',
   components: { LoginForm, DashboardPanel },
-  computed: {
-    token() { return localStorage.getItem('token'); }
+  data() {
+    return {
+      token: localStorage.getItem('token'),
+      usuario: JSON.parse(localStorage.getItem('usuario') || 'null')
+    };
+  },
+  methods: {
+    onAuthenticated(payload) {
+      this.token = payload.access_token;
+      this.usuario = payload.usuario;
+    },
+    onLogout() {
+      this.token = null;
+      this.usuario = null;
+    }
   }
 }
 </script>

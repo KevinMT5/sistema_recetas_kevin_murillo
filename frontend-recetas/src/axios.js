@@ -14,4 +14,17 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && !error.config?.url?.includes('login')) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('usuario');
+      window.dispatchEvent(new Event('sesion-expirada'));
+    }
+
+    return Promise.reject(error);
+  }
+);
+
 export default api;

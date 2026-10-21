@@ -1,145 +1,53 @@
 <template>
-  <div class="container mt-4">
-    <h2 class="mb-4">Crear Receta</h2>
-    <form @submit.prevent="crearReceta">
+  <form class="panel-card prescription-form" @submit.prevent="guardar">
+    <div class="panel-heading">
+      <div><span class="eyebrow text-primary">{{ recetaEditar ? 'Editar receta' : 'Nueva prescripción' }}</span><h3>{{ recetaEditar ? recetaEditar.numero_receta : 'Crear receta médica' }}</h3><p>Completa los datos generales y agrega al menos un medicamento.</p></div>
+      <button type="button" class="close-button" @click="$emit('cancel')">×</button>
+    </div>
 
-      <!-- Datos principales -->
-      <div class="mb-3">
-        <label class="form-label">Fecha:</label>
-        <input v-model="receta.fecha" type="date" class="form-control" required />
-      </div>
+    <div v-if="mensaje" class="form-alert form-alert-error">{{ mensaje }}</div>
+    <div class="form-grid prescription-main">
+      <label class="form-field"><span>Fecha *</span><input v-model="receta.fecha" type="date" required /><small v-if="errorDe('fecha')">{{ errorDe('fecha') }}</small></label>
+      <label class="form-field"><span>Número de receta *</span><input v-model.trim="receta.numero_receta" placeholder="Ej. REC-0002" required /><small v-if="errorDe('numero_receta')">{{ errorDe('numero_receta') }}</small></label>
+      <label class="form-field"><span>Médico *</span><select v-model="receta.medico_id" required><option value="">Selecciona un médico</option><option v-for="medico in medicos" :key="medico.id" :value="medico.id">{{ medico.nombre }} · {{ medico.numero_jv }}</option></select><small v-if="errorDe('medico_id')">{{ errorDe('medico_id') }}</small></label>
+      <label class="form-field"><span>Paciente *</span><select v-model="receta.paciente_id" required><option value="">Selecciona un paciente</option><option v-for="paciente in pacientes" :key="paciente.id" :value="paciente.id">{{ paciente.nombre }}</option></select><small v-if="errorDe('paciente_id')">{{ errorDe('paciente_id') }}</small></label>
+    </div>
 
-      <div class="mb-3">
-        <label class="form-label">Número de Receta:</label>
-        <input v-model="receta.numero_receta" type="text" class="form-control" placeholder="Número de Receta" required />
-      </div>
+    <div class="details-heading"><div><span class="eyebrow text-primary">Tratamiento</span><h4>Medicamentos indicados</h4></div><button type="button" class="secondary-button" @click="agregarDetalle">+ Agregar medicamento</button></div>
+    <div class="medicine-list">
+      <article v-for="(detalle, index) in receta.detalles" :key="index" class="medicine-row">
+        <span class="medicine-number">{{ index + 1 }}</span>
+        <label class="form-field"><span>Medicamento *</span><select v-model="detalle.medicamento_id" required><option value="">Seleccionar</option><option v-for="medicamento in medicamentos" :key="medicamento.id" :value="medicamento.id">{{ medicamento.nombre }} {{ medicamento.concentracion || '' }}</option></select></label>
+        <label class="form-field compact"><span>Cantidad *</span><input v-model.number="detalle.cantidad" type="number" min="1" required /></label>
+        <label class="form-field"><span>Dosis *</span><input v-model.trim="detalle.dosis" placeholder="Ej. 1 cada 8 horas" required /></label>
+        <label class="form-field"><span>Indicaciones</span><input v-model.trim="detalle.indicaciones" placeholder="Después de alimentos" /></label>
+        <button type="button" class="remove-button" :disabled="receta.detalles.length === 1" title="Quitar medicamento" @click="quitarDetalle(index)">×</button>
+      </article>
+    </div>
 
-      <div class="mb-3">
-        <label class="form-label">Médico:</label>
-        <select v-model="receta.medico_id" class="form-select" required>
-          <option value="" disabled>Selecciona un médico</option>
-          <option v-for="med in medicos" :key="med.id" :value="med.id">{{ med.nombre }}</option>
-        </select>
-      </div>
-
-      <div class="mb-3">
-        <label class="form-label">Paciente:</label>
-        <select v-model="receta.paciente_id" class="form-select" required>
-          <option value="" disabled>Selecciona un paciente</option>
-          <option v-for="pac in pacientes" :key="pac.id" :value="pac.id">{{ pac.nombre }}</option>
-        </select>
-      </div>
-
-      <!-- Detalles de medicamentos -->
-      <h4 class="mt-4 mb-3">Medicamentos</h4>
-      <div v-for="(detalle,index) in receta.detalles" :key="index" class="border p-3 mb-3 rounded">
-
-        <div class="mb-2">
-          <label class="form-label">Medicamento:</label>
-          <select v-model="detalle.medicamento_id" class="form-select" required>
-            <option value="" disabled>Selecciona un medicamento</option>
-            <option v-for="med in medicamentos" :key="med.id" :value="med.id">{{ med.nombre }}</option>
-          </select>
-        </div>
-
-        <div class="mb-2">
-          <label class="form-label">Cantidad:</label>
-          <input v-model="detalle.cantidad" type="number" min="1" class="form-control" required />
-        </div>
-
-        <div class="mb-2">
-          <label class="form-label">Dosis:</label>
-          <input v-model="detalle.dosis" type="text" class="form-control" placeholder="Dosis" required />
-        </div>
-
-        <div class="mb-2">
-          <label class="form-label">Indicaciones:</label>
-          <input v-model="detalle.indicaciones" type="text" class="form-control" placeholder="Indicaciones" />
-        </div>
-
-        <button @click.prevent="receta.detalles.splice(index,1)" class="btn btn-danger btn-sm">Eliminar</button>
-      </div>
-
-      <button @click.prevent="agregarDetalle" class="btn btn-secondary mb-3">Agregar Medicamento</button>
-      <br />
-      <button type="submit" class="btn btn-primary">Guardar Receta</button>
-    </form>
-  </div>
+    <div class="form-actions"><button type="button" class="secondary-button" @click="$emit('cancel')">Cancelar</button><button class="primary-button" :disabled="guardando"><span v-if="guardando" class="spinner"></span>{{ guardando ? 'Guardando...' : recetaEditar ? 'Actualizar receta' : 'Guardar receta' }}</button></div>
+  </form>
 </template>
 
 <script>
-import api from '../axios'; // tu configuración de axios
+import api from '../axios';
+const detalleVacio = () => ({ medicamento_id: '', cantidad: 1, dosis: '', indicaciones: '' });
+const fechaHoy = () => new Date().toISOString().slice(0, 10);
 
 export default {
-  data() {
-    return {
-      receta: { fecha:'', numero_receta:'', medico_id:'', paciente_id:'', detalles:[] },
-      medicos: [],
-      pacientes: [],
-      medicamentos: []
-    };
-  },
-  mounted() {
-    this.cargarCatalogos();
-  },
+  name: 'RecetaForm', emits: ['saved', 'cancel'], props: { recetaEditar: { type: Object, default: null } },
+  data() { return { receta: { fecha: fechaHoy(), numero_receta: '', medico_id: '', paciente_id: '', detalles: [detalleVacio()] }, medicos: [], pacientes: [], medicamentos: [], guardando: false, errores: {}, mensaje: '' }; },
+  watch: { recetaEditar: { immediate: true, handler(value) { if (value) this.receta = { fecha: value.fecha, numero_receta: value.numero_receta, medico_id: value.medico_id, paciente_id: value.paciente_id, detalles: value.detalles.map((d) => ({ medicamento_id: d.medicamento_id, cantidad: d.cantidad, dosis: d.dosis, indicaciones: d.indicaciones || '' })) }; } } },
+  async mounted() { try { const [m, p, md] = await Promise.all([api.get('medicos'), api.get('pacientes'), api.get('medicamentos')]); this.medicos = m.data; this.pacientes = p.data; this.medicamentos = md.data; } catch (_) { this.mensaje = 'No fue posible cargar los catálogos.'; } },
   methods: {
-    agregarDetalle() {
-      this.receta.detalles.push({ medicamento_id:'', cantidad:1, dosis:'', indicaciones:'' });
-    },
-    async cargarCatalogos() {
-      const token = localStorage.getItem('token');
-      try {
-        const [resMed, resPac, resMedics] = await Promise.all([
-          api.get('medicos', { headers:{ Authorization: `Bearer ${token}` } }),
-          api.get('pacientes', { headers:{ Authorization: `Bearer ${token}` } }),
-          api.get('medicamentos', { headers:{ Authorization: `Bearer ${token}` } })
-        ]);
-        this.medicos = resMed.data;
-        this.pacientes = resPac.data;
-        this.medicamentos = resMedics.data;
-      } catch (err) {
-        console.error('Error cargando catálogos', err);
-      }
-    },
-    async crearReceta() {
-      if(!this.receta.fecha || !this.receta.numero_receta || !this.receta.medico_id || !this.receta.paciente_id) {
-        alert('Completa todos los campos');
-        return;
-      }
-      if(this.receta.detalles.length === 0) {
-        alert('Agrega al menos un medicamento');
-        return;
-      }
-
-      const token = localStorage.getItem('token');
-      const recetaEnviar = {
-        ...this.receta,
-        medico_id: parseInt(this.receta.medico_id),
-        paciente_id: parseInt(this.receta.paciente_id),
-        detalles: this.receta.detalles.map(d => ({
-          medicamento_id: parseInt(d.medicamento_id),
-          cantidad: parseInt(d.cantidad),
-          dosis: d.dosis,
-          indicaciones: d.indicaciones
-        }))
-      };
-
-      try {
-        await api.post('recetas', recetaEnviar, { headers:{ Authorization: `Bearer ${token}` } });
-        alert('Receta creada con éxito');
-        this.receta = { fecha:'', numero_receta:'', medico_id:'', paciente_id:'', detalles:[] };
-      } catch (err) {
-        if(err.response && err.response.status === 422){
-          alert('Error de validación: ' + JSON.stringify(err.response.data));
-        } else {
-          console.error(err);
-        }
-      }
+    agregarDetalle() { this.receta.detalles.push(detalleVacio()); }, quitarDetalle(index) { if (this.receta.detalles.length > 1) this.receta.detalles.splice(index, 1); }, errorDe(campo) { return this.errores[campo]?.[0]; },
+    async guardar() {
+      this.guardando = true; this.errores = {}; this.mensaje = '';
+      const payload = { ...this.receta, medico_id: Number(this.receta.medico_id), paciente_id: Number(this.receta.paciente_id), detalles: this.receta.detalles.map((d) => ({ ...d, medicamento_id: Number(d.medicamento_id), cantidad: Number(d.cantidad) })) };
+      try { const response = this.recetaEditar ? await api.put(`recetas/${this.recetaEditar.id}`, payload) : await api.post('recetas', payload); this.$emit('saved', response.data); }
+      catch (error) { if (error.response?.status === 422) { this.errores = error.response.data; this.mensaje = 'Revisa los campos marcados antes de continuar.'; } else this.mensaje = error.response?.data?.message || 'No fue posible guardar la receta.'; }
+      finally { this.guardando = false; }
     }
   }
 };
 </script>
-
-<style scoped>
-/* Puedes añadir ajustes extra si quieres */
-</style>

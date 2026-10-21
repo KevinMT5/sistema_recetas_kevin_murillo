@@ -8,6 +8,7 @@ use App\Models\Receta;
 use App\Models\RecetaDetalle;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class RecetaController extends Controller
 {
@@ -85,6 +86,32 @@ class RecetaController extends Controller
         return response()->json($receta);
     }
 
+    public function update(Request $request, $id)
+    {
+        $receta = Receta::findOrFail($id);
+        $validator = Validator::make($request->all(), $this->rules($receta->id));
+
+        if ($validator->fails()) {
+            return response()->json($validator->errors(), 422);
+        }
+
+        DB::transaction(function () use ($request, $receta) {
+            $receta->update($request->only(['fecha', 'numero_receta', 'medico_id', 'paciente_id']));
+            $receta->detalles()->delete();
+
+            foreach ($request->detalles as $detalle) {
+                $receta->detalles()->create([
+                    'medicamento_id' => $detalle['medicamento_id'],
+                    'cantidad' => $detalle['cantidad'],
+                    'dosis' => $detalle['dosis'],
+                    'indicaciones' => $detalle['indicaciones'] ?? null,
+                ]);
+            }
+        });
+
+        return response()->json($receta->fresh()->load(['medico.establecimiento', 'paciente', 'detalles.medicamento']));
+    }
+
     /**
      * Remove the specified resource from storage.
      */
@@ -94,5 +121,20 @@ class RecetaController extends Controller
         $receta->delete();
 
         return response()->json(['message' => 'Receta eliminada']);
+    }
+
+    private function rules($id = null)
+    {
+        return [
+            'fecha' => ['required', 'date'],
+            'numero_receta' => ['required', 'string', 'max:255', Rule::unique('recetas')->ignore($id)],
+            'medico_id' => ['required', 'integer', 'exists:medicos,id'],
+            'paciente_id' => ['required', 'integer', 'exists:pacientes,id'],
+            'detalles' => ['required', 'array', 'min:1'],
+            'detalles.*.medicamento_id' => ['required', 'integer', 'exists:medicamentos,id'],
+            'detalles.*.cantidad' => ['required', 'integer', 'min:1'],
+            'detalles.*.dosis' => ['required', 'string', 'max:255'],
+            'detalles.*.indicaciones' => ['nullable', 'string'],
+        ];
     }
 }

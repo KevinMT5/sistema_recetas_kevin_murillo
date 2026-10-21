@@ -61,6 +61,10 @@ class EstablecimientoController extends Controller
     public function destroy($id)
     {
         $establecimiento = Establecimiento::findOrFail($id);
+        if ($establecimiento->medicos()->exists()) {
+            return response()->json(['message' => 'No se puede eliminar un establecimiento que tiene médicos.'], 409);
+        }
+
         $establecimiento->delete();
         return response()->json(['message' => 'Establecimiento eliminado']);
     }
