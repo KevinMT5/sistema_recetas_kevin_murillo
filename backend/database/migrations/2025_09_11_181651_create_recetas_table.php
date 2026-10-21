@@ -15,6 +15,10 @@ return new class extends Migration
     {
         Schema::create('recetas', function (Blueprint $table) {
             $table->id();
+            $table->date('fecha');
+            $table->string('numero_receta')->unique();
+            $table->foreignId('medico_id')->constrained('medicos')->restrictOnDelete();
+            $table->foreignId('paciente_id')->constrained('pacientes')->restrictOnDelete();
             $table->timestamps();
         });
     }

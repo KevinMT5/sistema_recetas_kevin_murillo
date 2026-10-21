@@ -15,6 +15,12 @@ return new class extends Migration
     {
         Schema::create('medicos', function (Blueprint $table) {
             $table->id();
+            $table->string('nombre');
+            $table->string('numero_jv')->unique();
+            $table->string('especialidad')->nullable();
+            $table->foreignId('establecimiento_id')
+                ->constrained('establecimientos')
+                ->restrictOnDelete();
             $table->timestamps();
         });
     }

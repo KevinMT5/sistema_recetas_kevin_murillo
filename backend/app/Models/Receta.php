@@ -16,6 +16,8 @@ class Receta extends Model
         'paciente_id',
     ];
 
+    protected $casts = ['fecha' => 'date:Y-m-d'];
+
     // Relación con el médico
     public function medico() {
         return $this->belongsTo(Medico::class);

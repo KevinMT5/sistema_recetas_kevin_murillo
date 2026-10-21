@@ -1,0 +1,76 @@
+services:
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: sistema_recetas
+      MYSQL_USER: recetas_user
+      MYSQL_PASSWORD: recetas_password
+      MYSQL_ROOT_PASSWORD: root_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 20s
+
+  backend:
+    image: sistema-recetas-backend:local
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      APP_ENV: local
+      APP_DEBUG: "true"
+      APP_KEY: base64:gWwia1QU1xGCeLgp2aW6sqSlb0jgZvynSDLsgFFnDYw=
+      APP_URL: http://127.0.0.1:8001
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_DATABASE: sistema_recetas
+      DB_USERNAME: recetas_user
+      DB_PASSWORD: recetas_password
+    ports:
+      - "8001:8000"
+    volumes:
+      - ./backend:/app
+      - backend_vendor:/app/vendor
+
+  frontend:
+    image: sistema-recetas-frontend:local
+    build:
+      context: ./frontend-recetas
+      dockerfile: Dockerfile
+    depends_on:
+      - backend
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+      VUE_APP_API_URL: http://127.0.0.1:8001/api
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./frontend-recetas:/app
+      - frontend_node_modules:/app/node_modules
+
+  phpmyadmin:
+    image: phpmyadmin:5
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      PMA_HOST: mysql
+      PMA_PORT: "3306"
+      UPLOAD_LIMIT: 64M
+    ports:
+      - "8082:80"
+
+volumes:
+  backend_vendor:
+  frontend_node_modules:
+  mysql_data:

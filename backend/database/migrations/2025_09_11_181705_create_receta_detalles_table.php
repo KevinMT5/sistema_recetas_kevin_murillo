@@ -15,6 +15,11 @@ return new class extends Migration
     {
         Schema::create('receta_detalles', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('receta_id')->constrained('recetas')->cascadeOnDelete();
+            $table->foreignId('medicamento_id')->constrained('medicamentos')->restrictOnDelete();
+            $table->unsignedInteger('cantidad');
+            $table->string('dosis');
+            $table->text('indicaciones')->nullable();
             $table->timestamps();
         });
     }

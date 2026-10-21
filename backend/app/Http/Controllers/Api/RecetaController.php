@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\Receta;
 use App\Models\RecetaDetalle;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 
 class RecetaController extends Controller
 {
@@ -36,7 +37,7 @@ class RecetaController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'fecha' => 'required|date',
-            'numero_receta' => 'required|string',
+            'numero_receta' => 'required|string|max:255|unique:recetas,numero_receta',
             'medico_id' => 'required|integer|exists:medicos,id',
             'paciente_id' => 'required|integer|exists:pacientes,id',
             'detalles' => 'required|array|min:1',
@@ -50,17 +51,21 @@ class RecetaController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
-        $receta = Receta::create($request->only(['fecha','numero_receta','medico_id','paciente_id']));
+        $receta = DB::transaction(function () use ($request) {
+            $receta = Receta::create($request->only(['fecha', 'numero_receta', 'medico_id', 'paciente_id']));
 
-        foreach($request->detalles as $detalle){
-            RecetaDetalle::create([
-                'receta_id' => $receta->id,
-                'medicamento_id' => $detalle['medicamento_id'],
-                'cantidad' => $detalle['cantidad'],
-                'dosis' => $detalle['dosis'],
-                'indicaciones' => $detalle['indicaciones'] ?? null
-            ]);
-        }
+            foreach ($request->detalles as $detalle) {
+                RecetaDetalle::create([
+                    'receta_id' => $receta->id,
+                    'medicamento_id' => $detalle['medicamento_id'],
+                    'cantidad' => $detalle['cantidad'],
+                    'dosis' => $detalle['dosis'],
+                    'indicaciones' => $detalle['indicaciones'] ?? null,
+                ]);
+            }
+
+            return $receta;
+        });
 
         // Retornamos la receta completa con relaciones cargadas
         return response()->json(

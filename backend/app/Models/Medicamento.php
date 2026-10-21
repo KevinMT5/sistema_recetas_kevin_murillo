@@ -8,4 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 class Medicamento extends Model
 {
     use HasFactory;
+
+    protected $fillable = ['nombre', 'presentacion', 'concentracion'];
+
+    public function detallesReceta()
+    {
+        return $this->hasMany(RecetaDetalle::class);
+    }
 }
