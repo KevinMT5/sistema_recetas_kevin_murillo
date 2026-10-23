@@ -9,7 +9,10 @@ class Medico extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nombre', 'numero_jv', 'especialidad', 'establecimiento_id'];
+    protected $fillable = ['user_id', 'nombre', 'numero_jv', 'especialidad', 'especialidad_id', 'establecimiento_id'];
+
+    public function user() { return $this->belongsTo(User::class); }
+    public function especialidadCatalogo() { return $this->belongsTo(Especialidad::class, 'especialidad_id'); }
 
     // Relación con establecimiento
     public function establecimiento()
@@ -21,4 +24,7 @@ class Medico extends Model
     {
         return $this->hasMany(Receta::class);
     }
+
+    public function citas() { return $this->hasMany(Cita::class); }
+    public function horarios() { return $this->hasMany(HorarioMedico::class); }
 }

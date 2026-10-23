@@ -14,6 +14,7 @@ class Receta extends Model
         'numero_receta',
         'medico_id',
         'paciente_id',
+        'consulta_id',
     ];
 
     protected $casts = ['fecha' => 'date:Y-m-d'];
@@ -27,6 +28,8 @@ class Receta extends Model
     public function paciente() {
         return $this->belongsTo(Paciente::class);
     }
+
+    public function consulta() { return $this->belongsTo(Consulta::class); }
 
     // Relación con los detalles de la receta (medicamentos)
     public function detalles() {

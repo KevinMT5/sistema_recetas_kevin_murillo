@@ -15,7 +15,7 @@
         <div class="prescription-card-head"><div><span class="prescription-number">{{ receta.numero_receta }}</span><strong>{{ receta.paciente?.nombre || 'Sin paciente' }}</strong><small>{{ formatearFecha(receta.fecha) }}</small></div><span class="count-badge">{{ receta.total_medicamentos ?? receta.detalles?.length }} medicamentos</span></div>
         <div class="prescription-meta"><span><b>Médico</b>{{ receta.medico?.nombre || '—' }}</span><span><b>Establecimiento</b>{{ receta.medico?.establecimiento?.nombre || '—' }}</span></div>
         <div class="medicine-summary"><div v-for="detalle in receta.detalles" :key="detalle.id"><strong>{{ detalle.medicamento?.nombre }}</strong><span>{{ detalle.cantidad }} · {{ detalle.dosis }}</span></div></div>
-        <div class="card-actions"><button class="text-button" @click="$emit('edit', receta)">Editar receta</button><button class="text-button danger-text" @click="eliminar(receta)">Eliminar</button></div>
+        <div v-if="!readonly" class="card-actions"><button class="text-button" @click="$emit('edit', receta)">Editar receta</button><button class="text-button danger-text" @click="eliminar(receta)">Eliminar</button></div>
       </article>
     </div>
   </section>
@@ -24,7 +24,7 @@
 <script>
 import api from '../axios';
 export default {
-  name: 'RecetasList', emits: ['edit', 'changed'], props: { refreshKey: { type: Number, default: 0 } },
+  name: 'RecetasList', emits: ['edit', 'changed'], props: { refreshKey: { type: Number, default: 0 }, readonly: { type: Boolean, default: false } },
   data() { return { recetas: [], medicos: [], medicamentos: [], filtros: { medico_id: '', medicamento_id: '', fecha: '' }, cargando: true, mensaje: null }; },
   watch: { refreshKey() { this.cargar(); } },
   async mounted() { const [m, md] = await Promise.all([api.get('medicos'), api.get('medicamentos')]); this.medicos = m.data; this.medicamentos = md.data; await this.cargar(); },

@@ -15,4 +15,7 @@ class Establecimiento extends Model
     {
         return $this->hasMany(Medico::class);
     }
+
+    public function consultorios() { return $this->hasMany(Consultorio::class); }
+    public function citas() { return $this->hasMany(Cita::class); }
 }

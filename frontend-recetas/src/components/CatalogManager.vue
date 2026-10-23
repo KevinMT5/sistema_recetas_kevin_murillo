@@ -2,7 +2,7 @@
   <section class="stack-lg">
     <div class="section-intro">
       <div><span class="eyebrow text-primary">Catálogo</span><h2>{{ config.titulo }}</h2><p>{{ config.descripcion }}</p></div>
-      <button class="primary-button" @click="abrirFormulario">+ Nuevo {{ config.singular }}</button>
+      <button v-if="!config.readonly" class="primary-button" @click="abrirFormulario">+ Nuevo {{ config.singular }}</button>
     </div>
 
     <div v-if="mensaje" class="form-alert" :class="mensaje.tipo === 'error' ? 'form-alert-error' : 'form-alert-success'">{{ mensaje.texto }}</div>
@@ -12,9 +12,9 @@
       <div class="form-grid">
         <label v-for="field in config.fields" :key="field.key" class="form-field" :class="{ wide: field.wide }">
           <span>{{ field.label }} <b v-if="field.required">*</b></span>
-          <select v-if="field.type === 'select'" v-model="form[field.key]" :required="field.required">
+          <select v-if="field.type === 'select' || field.type === 'select-static'" v-model="form[field.key]" :required="field.required">
             <option value="">Selecciona una opción</option>
-            <option v-for="option in opciones[field.key] || []" :key="option.id" :value="option.id">{{ option.nombre }}</option>
+            <option v-for="option in field.options || opciones[field.key] || []" :key="option.id" :value="option.id">{{ option.nombre }}</option>
           </select>
           <input v-else v-model="form[field.key]" :type="field.type || 'text'" :required="field.required" :placeholder="field.label" />
           <small v-if="errores[field.key]">{{ errores[field.key][0] }}</small>
@@ -28,8 +28,8 @@
       <div v-if="cargando" class="empty-state">Cargando registros...</div>
       <div v-else-if="!filtrados.length" class="empty-state"><span class="empty-icon">◇</span><strong>No hay resultados</strong><p>Agrega un registro o cambia el término de búsqueda.</p></div>
       <div v-else class="table-responsive">
-        <table class="data-table"><thead><tr><th v-for="column in config.columns" :key="column.key">{{ column.label }}</th><th class="actions-column">Acciones</th></tr></thead>
-          <tbody><tr v-for="item in filtrados" :key="item.id"><td v-for="column in config.columns" :key="column.key" :data-label="column.label"><strong v-if="column === config.columns[0]">{{ valor(item, column) }}</strong><span v-else>{{ valor(item, column) }}</span></td><td class="row-actions"><button class="icon-button" title="Editar" @click="editar(item)">Editar</button><button class="icon-button danger" title="Eliminar" @click="eliminar(item)">Eliminar</button></td></tr></tbody>
+        <table class="data-table"><thead><tr><th v-for="column in config.columns" :key="column.key">{{ column.label }}</th><th v-if="!config.readonly" class="actions-column">Acciones</th></tr></thead>
+          <tbody><tr v-for="item in filtrados" :key="item.id"><td v-for="column in config.columns" :key="column.key" :data-label="column.label"><strong v-if="column === config.columns[0]">{{ valor(item, column) }}</strong><span v-else>{{ valor(item, column) }}</span></td><td v-if="!config.readonly" class="row-actions"><button class="icon-button" title="Editar" @click="editar(item)">Editar</button><button v-if="config.canDelete !== false" class="icon-button danger" title="Eliminar" @click="eliminar(item)">Eliminar</button></td></tr></tbody>
         </table>
       </div>
     </section>
@@ -58,7 +58,7 @@ export default {
       catch (error) { if (error.response?.status === 422) this.errores = error.response.data.errors || error.response.data; else this.mensaje = { tipo: 'error', texto: error.response?.data?.message || 'No fue posible guardar el registro.' }; }
       finally { this.guardando = false; }
     },
-    async eliminar(item) { if (!window.confirm(`¿Eliminar ${item.nombre}?`)) return; try { await api.delete(`${this.config.endpoint}/${item.id}`); await this.cargar(); this.mensaje = { tipo: 'success', texto: 'Registro eliminado correctamente.' }; } catch (error) { this.mensaje = { tipo: 'error', texto: error.response?.data?.message || 'No fue posible eliminar el registro.' }; } },
+    async eliminar(item) { if (!window.confirm(`¿Eliminar ${item.nombre || item.name}?`)) return; try { await api.delete(`${this.config.endpoint}/${item.id}`); await this.cargar(); this.mensaje = { tipo: 'success', texto: 'Registro eliminado correctamente.' }; } catch (error) { this.mensaje = { tipo: 'error', texto: error.response?.data?.message || 'No fue posible eliminar el registro.' }; } },
     valor(item, column) { const raw = column.key.split('.').reduce((current, key) => current?.[key], item); if (!raw) return '—'; if (column.format === 'date') return new Intl.DateTimeFormat('es-SV', { timeZone: 'UTC' }).format(new Date(raw)); return raw; }
   }
 };

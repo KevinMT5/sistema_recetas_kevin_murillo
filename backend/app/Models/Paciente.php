@@ -9,7 +9,7 @@ class Paciente extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['nombre', 'fecha_nacimiento', 'telefono', 'direccion'];
+    protected $fillable = ['user_id', 'nombre', 'email', 'documento', 'fecha_nacimiento', 'telefono', 'direccion', 'contacto_emergencia'];
 
     protected $casts = ['fecha_nacimiento' => 'date'];
 
@@ -17,4 +17,7 @@ class Paciente extends Model
     {
         return $this->hasMany(Receta::class);
     }
+
+    public function user() { return $this->belongsTo(User::class); }
+    public function citas() { return $this->hasMany(Cita::class); }
 }

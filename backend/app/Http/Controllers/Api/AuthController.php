@@ -16,7 +16,7 @@ class AuthController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', 'unique:users,email'],
             'password' => ['required', 'string', 'min:8'],
-            'rol' => ['nullable', Rule::in(['administrador', 'medico'])],
+            'rol' => ['nullable', Rule::in(['administrador', 'recepcionista', 'medico', 'paciente'])],
         ]);
 
         $user = User::create([
@@ -43,7 +43,7 @@ class AuthController extends Controller
         ]);
 
         $user = User::where('email', $credentials['email'])->first();
-        if (!$user || !Hash::check($credentials['password'], $user->password)) {
+        if (!$user || !$user->activo || !Hash::check($credentials['password'], $user->password)) {
             return response()->json(['message' => 'Credenciales inválidas'], 401);
         }
 

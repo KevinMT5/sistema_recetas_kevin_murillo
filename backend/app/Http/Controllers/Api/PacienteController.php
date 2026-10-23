@@ -11,9 +11,11 @@ class PacienteController extends Controller
     /**
      * Devuelve todos los pacientes.
      */
-    public function index()
+    public function index(Request $request)
     {
-        $pacientes = Paciente::all(); // Trae todos los registros
+        $pacientes = Paciente::query()
+            ->when($request->user()->rol === 'medico', fn ($query) => $query->whereHas('citas', fn ($citas) => $citas->where('medico_id', optional($request->user()->medico)->id ?? 0)))
+            ->orderBy('nombre')->get();
         return response()->json($pacientes);
     }
 
@@ -47,9 +49,12 @@ class PacienteController extends Controller
     {
         return $request->validate([
             'nombre' => ['required', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'documento' => ['nullable', 'string', 'max:40'],
             'fecha_nacimiento' => ['nullable', 'date', 'before_or_equal:today'],
             'telefono' => ['nullable', 'string', 'max:25'],
             'direccion' => ['nullable', 'string', 'max:255'],
+            'contacto_emergencia' => ['nullable', 'string', 'max:255'],
         ]);
     }
 }

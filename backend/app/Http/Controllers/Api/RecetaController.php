@@ -24,6 +24,12 @@ class RecetaController extends Controller
             ->when($request->fecha, fn($q) => $q->where('fecha', $request->fecha))
             ->when($request->medicamento_id, fn($q) => $q->whereHas('detalles', fn($q2) => $q2->where('medicamento_id', $request->medicamento_id)));
 
+        if ($request->user()->rol === 'paciente') {
+            $query->where('paciente_id', optional($request->user()->paciente)->id ?? 0);
+        } elseif ($request->user()->rol === 'medico') {
+            $query->where('medico_id', optional($request->user()->medico)->id ?? 0);
+        }
+
         $recetas = $query->get();
         $recetas->transform(fn($r) => tap($r, fn($x) => $x->total_medicamentos = $x->detalles_count));
 
@@ -36,6 +42,9 @@ class RecetaController extends Controller
      */
     public function store(Request $request)
     {
+        if ($request->user()->rol === 'medico' && (int) $request->medico_id !== (int) optional($request->user()->medico)->id) {
+            return response()->json(['message' => 'Solo puedes emitir recetas con tu propio perfil médico.'], 403);
+        }
         $validator = Validator::make($request->all(), [
             'fecha' => 'required|date',
             'numero_receta' => 'required|string|max:255|unique:recetas,numero_receta',
@@ -89,6 +98,7 @@ class RecetaController extends Controller
     public function update(Request $request, $id)
     {
         $receta = Receta::findOrFail($id);
+        if ($request->user()->rol === 'medico' && $receta->medico_id !== optional($request->user()->medico)->id) abort(403);
         $validator = Validator::make($request->all(), $this->rules($receta->id));
 
         if ($validator->fails()) {
@@ -118,6 +128,7 @@ class RecetaController extends Controller
     public function destroy($id)
     {
         $receta = Receta::findOrFail($id);
+        if (request()->user()->rol === 'medico' && $receta->medico_id !== optional(request()->user()->medico)->id) abort(403);
         $receta->delete();
 
         return response()->json(['message' => 'Receta eliminada']);

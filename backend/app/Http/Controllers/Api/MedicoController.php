@@ -14,19 +14,19 @@ class MedicoController extends Controller
      */
     public function index()
     {
-        $medicos = Medico::with('establecimiento')->get(); // carga el establecimiento
+        $medicos = Medico::with(['establecimiento', 'especialidadCatalogo', 'horarios'])->orderBy('nombre')->get();
         return response()->json($medicos);
     }
 
     public function store(Request $request)
     {
         $data = $this->validateData($request);
-        return response()->json(Medico::create($data)->load('establecimiento'), 201);
+        return response()->json(Medico::create($data)->load(['establecimiento', 'especialidadCatalogo']), 201);
     }
 
     public function show(Medico $medico)
     {
-        return response()->json($medico->load('establecimiento'));
+        return response()->json($medico->load(['establecimiento', 'especialidadCatalogo', 'horarios']));
     }
 
     public function update(Request $request, Medico $medico)
@@ -51,6 +51,8 @@ class MedicoController extends Controller
             'nombre' => ['required', 'string', 'max:255'],
             'numero_jv' => ['required', 'string', 'max:255', Rule::unique('medicos')->ignore($id)],
             'especialidad' => ['nullable', 'string', 'max:255'],
+            'especialidad_id' => ['nullable', 'integer', 'exists:especialidades,id'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'establecimiento_id' => ['required', 'integer', 'exists:establecimientos,id'],
         ]);
     }

@@ -1,8 +1,15 @@
-# Sistema de recetas
+# Clínica Nova — gestión clínica integral
 
-Aplicación con API en Laravel 9 y frontend en Vue 3 para registrar recetas médicas.
+Sistema comercial para clínicas con API en Laravel 9, frontend en Vue 3, MySQL 8.4 y acceso por roles.
 
-Incluye panel administrativo responsive, autenticación con Sanctum, resumen de actividad, CRUD de establecimientos, médicos, pacientes y medicamentos, además de creación, edición, filtros y eliminación de recetas.
+Incluye cuatro experiencias diferenciadas:
+
+- **Paciente:** reserva y consulta citas, cancelación controlada e historial de recetas.
+- **Recepción:** agenda diaria, alta de pacientes, confirmación, check-in y control de estados.
+- **Médico:** agenda propia, consulta clínica, signos vitales, diagnóstico, indicaciones y recetas.
+- **Administración:** usuarios y roles, médicos, pacientes, sedes, consultorios, especialidades, horarios, medicamentos y supervisión de agenda.
+
+La interfaz y los flujos se diseñaron con técnicas de UX Pilot: acciones primarias inequívocas, resumen antes de confirmar, prevención de dobles reservas, estados operativos legibles, privacidad por rol, estados vacíos útiles y adaptación responsive.
 
 ## Ejecutar con Docker (recomendado)
 
@@ -48,15 +55,18 @@ No se debe agregar `-v` al comando anterior salvo que se quiera borrar también 
 
 ## Base de datos
 
-El proyecto usa MySQL 8.4 dentro de Docker. No es necesario instalar MySQL en el equipo. Las migraciones crean las tablas `users`, `establecimientos`, `medicos`, `pacientes`, `medicamentos`, `recetas`, `receta_detalles` y las tablas internas de Laravel.
+El proyecto usa MySQL 8.4 dentro de Docker. No es necesario instalar MySQL en el equipo. Las migraciones crean las tablas `users`, `establecimientos`, `consultorios`, `especialidades`, `medicos`, `horarios_medicos`, `pacientes`, `citas`, `consultas`, `medicamentos`, `recetas`, `receta_detalles` y las tablas internas de Laravel.
 
-Las migraciones de Laravel son la fuente principal del esquema y funcionan directamente con MySQL.
-También se incluye [backend/database/schema.mysql.sql](backend/database/schema.mysql.sql) como respaldo importable desde phpMyAdmin.
+Las migraciones de Laravel son la fuente principal del esquema y se ejecutan automáticamente al iniciar el backend.
 
-Los datos de demostración incluyen establecimientos, médicos, pacientes, medicamentos, una receta y este acceso:
+Los datos de demostración incluyen sedes, consultorios, horarios, médicos, pacientes, una cita y recetas. Todos los perfiles usan la contraseña `password`:
 
-- Correo: `admin@recetas.test`
-- Contraseña: `password`
+| Perfil | Correo |
+| --- | --- |
+| Administración | `admin@recetas.test` |
+| Recepción | `recepcion@clinicanova.test` |
+| Médico | `medico@clinicanova.test` |
+| Paciente | `paciente@clinicanova.test` |
 
 ## Instalación del backend
 
